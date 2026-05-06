@@ -1,7 +1,6 @@
 # fandom-to-epub
 
-![NPM Version](https://img.shields.io/npm/v/fandom-to-epub)
-![License](https://img.shields.io/npm/l/fandom-to-epub)
+![License](https://img.shields.io/badge/license-MIT-green)
 ![Build](https://github.com/ygoc95/fandom-to-epub/actions/workflows/test.yml/badge.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
