@@ -1,0 +1,25 @@
+{
+  "name": "fandom-to-epub",
+  "version": "1.0.0",
+  "description": "Convert Fandom wikis to EPUB e-books",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "fandom-to-epub": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "jszip": "^3.10.1",
+    "yargs": "^17.7.2"
+  },
+  "files": [
+    "src/"
+  ],
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
