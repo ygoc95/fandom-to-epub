@@ -14,8 +14,11 @@ function parseUrl(input) {
     const p = decodeURIComponent(parts[1]);
     if (p.startsWith('Category:')) category = p.slice(9);
   }
-  const name = u.hostname.split('.')[0];
-  const wikiName = name.charAt(0).toUpperCase() + name.slice(1) + ' Wiki';
+  let name = u.hostname.split('.')[0];
+  name = name.replace(/([a-z])([A-Z])/g, '$1 $2');
+  name = name.replace(/-/g, ' ');
+  name = name.replace(/\b\w/g, c => c.toUpperCase());
+  const wikiName = name + ' Wiki';
   return { base, category, wikiName };
 }
 
@@ -32,6 +35,7 @@ async function main() {
     .option('output', { alias: 'o', type: 'string', default: 'output.epub', describe: 'Output EPUB file' })
     .option('title', { alias: 't', type: 'string', describe: 'Book title' })
     .option('author', { alias: 'a', type: 'string', describe: 'Book author' })
+    .option('lang', { type: 'string', default: 'en', describe: 'EPUB language code (e.g. en, de, ja)' })
     .help()
     .argv;
 
@@ -90,6 +94,8 @@ async function main() {
   console.log(`Fetching ${finalTitles.length} pages from ${base} ...`);
 
   const pages = [];
+  const seenTitles = new Set();
+  let emptyPages = 0, errorPages = 0, skippedThin = 0, skippedDup = 0;
   for (let i = 0; i < finalTitles.length; i++) {
     const t = finalTitles[i];
     process.stdout.write(`[${i + 1}/${finalTitles.length}] ${t} ... `);
@@ -98,17 +104,26 @@ async function main() {
       const result = await getPage(base, t);
       if (!result.html) {
         console.log('empty');
+        emptyPages++;
         continue;
       }
       const cleaned = cleanHtml(result.html, result.title);
+      if (seenTitles.has(cleaned.title)) {
+        console.log(`duplicate (→ ${cleaned.title})`);
+        skippedDup++;
+        continue;
+      }
       if (cleaned.content.length > 100) {
         pages.push(cleaned);
+        seenTitles.add(cleaned.title);
         console.log(`${cleaned.content.length} chars`);
       } else {
         console.log(`skip (${cleaned.content.length} chars)`);
+        skippedThin++;
       }
     } catch (err) {
       console.log(`error: ${err.message}`);
+      errorPages++;
     }
   }
 
@@ -122,11 +137,20 @@ async function main() {
     author: baseAuthor,
     pages,
     outputPath: argv.output,
-    description: `Generated from ${base}`
+    description: `Generated from ${base}`,
+    url: argv.url,
+    lang: argv.lang
   });
 
   const totalChars = pages.reduce((s, p) => s + p.content.length, 0);
-  console.log(`\nDone: ${argv.output} (${pages.length} chapters, ${totalChars} chars)`);
+  const parts = [];
+  parts.push(`${pages.length} chapters`);
+  parts.push(`${totalChars.toLocaleString()} chars`);
+  if (skippedDup) parts.push(`${skippedDup} duped`);
+  if (skippedThin) parts.push(`${skippedThin} thin`);
+  if (emptyPages) parts.push(`${emptyPages} empty`);
+  if (errorPages) parts.push(`${errorPages} errors`);
+  console.log(`\nDone: ${argv.output} (${parts.join(', ')})`);
 }
 
 main().catch(err => {

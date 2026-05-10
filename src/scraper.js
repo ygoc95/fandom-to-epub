@@ -92,7 +92,8 @@ export async function getAllPages(baseUrl, limit = Infinity) {
       action: 'query',
       list: 'allpages',
       aplimit: 500,
-      apnamespace: 0
+      apnamespace: 0,
+      apfilterredir: 'nonredirects'
     };
     if (cont) params.apcontinue = cont;
 
